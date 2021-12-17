@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name='root2mpl',
-    version='0.0.1',
+    version='0.1.0',
     description='Python module for converting ROOT histograms and graphs into Matplotlib-compatible objects',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -22,7 +22,6 @@ setuptools.setup(
         'Topic :: Scientific/Engineering',
         'Framework :: Matplotlib',
         ],
-    #packages = setuptools.find_packages(),
     py_modules=["root2mpl"],
     python_requires='>=3.7',
     install_requires=['numpy',
