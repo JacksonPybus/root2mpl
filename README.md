@@ -3,7 +3,8 @@ Python module for converting ROOT histograms and graphs into Matplotlib-compatib
 
 To install the package:
 
-   Navigate to top root2mpl/ resository
+   Navigate to top root2mpl/ repository
+   
    Execute:
 	```
 	pip3 install .
