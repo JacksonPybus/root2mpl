@@ -54,12 +54,12 @@ class File:
             raise ValueError("This is not a 2D histogram and cannot be plotted with this method")
         
 class Hist1D:
-    def __init__(self,hist,rebin=1,scale=1):
+    def __init__(self,hist,rebin=None,scale=1):
         global nObj
         self.TH1 = hist.Clone(str(nObj))
         nObj = nObj + 1
         
-        if (rebin != 1):
+        if (not (rebin is None)):
             self.TH1.Rebin(rebin)
             
         g = ROOT.TGraphAsymmErrors(self.TH1)
@@ -78,7 +78,7 @@ class Hist1D:
         self.yerr *= factor
 
     def rebin(self,factor):
-        if (factor != 1):
+        if (factor.all() != 1):
             self.TH1.Rebin(factor)
             g = ROOT.TGraphAsymmErrors(self.TH1)
             self.x = np.array(g.GetX())
@@ -96,12 +96,12 @@ class Hist1D:
         self.scale(factor)
         return factor
         
-    def plotPoints(self,**kwargs):
-        return plt.errorbar(self.x,self.y,yerr=self.yerr,**kwargs)
+    def plotPoints(self,xscale=1,**kwargs):
+        return plt.errorbar(xscale*self.x,self.y,yerr=self.yerr,**kwargs)
 
-    def plotBand(self,alpha=0.25,**kwargs):
-        line = plt.plot(self.x,self.y,**kwargs)[0]
-        band = plt.fill_between(self.x,self.y-self.yerr,self.y+self.yerr,
+    def plotBand(self,xscale=1,alpha=0.25,**kwargs):
+        line = plt.plot(xscale*self.x,self.y,**kwargs)[0]
+        band = plt.fill_between(xscale*self.x,self.y-self.yerr,self.y+self.yerr,
                                 color=line.get_color(),zorder=line.zorder,
                                 alpha=alpha)
         return line, band
@@ -151,11 +151,17 @@ class Hist2D:
         self.z = np.array(z)
         self.zerr = np.array(zerr)
     
-    def plotHeatmap(self,kill_zeros=True,**kwargs):
+    def plotHeatmap(self,kill_zeros=True,transpose=False,**kwargs):
+        xedge = self.xedge
+        yedge = self.yedge
         z = self.z
         if (kill_zeros):
             z[z==0] = np.nan
-        return plt.pcolormesh(self.xedge,self.yedge,self.z,**kwargs)
+        if (transpose):
+            xedge, yedge = self.yedge, self.xedge
+            z = np.transpose(self.z)
+        
+        return plt.pcolormesh(xedge,yedge,z,**kwargs)
 
     def projectionX(self,**kwargs):
         return Hist1D(self.TH2.ProjectionX(),**kwargs)
