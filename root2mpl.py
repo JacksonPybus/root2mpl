@@ -19,6 +19,8 @@ class File:
             return Hist2D(h,**kwargs)
         elif (isinstance(h,ROOT.TH1)):
             return Hist1D(h,**kwargs)
+        elif (isinstance(h,ROOT.TDirectory)):
+              return Directory(h,**kwargs)
         else:
             raise ValueError("Object is not a supported type")
 
@@ -52,6 +54,58 @@ class File:
             return h.plotHeatmap(**kwargs)
         else:
             raise ValueError("This is not a 2D histogram and cannot be plotted with this method")
+
+class Directory:
+    def __init__(self,directory):
+        if (isinstance(directory,ROOT.TDirectory)):
+            self.TDirectory = directory
+        else:
+            self.TDirectory = ROOT.TDirectory(directory)
+       
+    def get(self,name,**kwargs):
+        if (not self.TDirectory.GetListOfKeys().Contains(name)):
+            raise ValueError("Directory does not contain specified object")
+        h = self.TDirectory.Get(name)
+        if (isinstance(h,ROOT.TH2)):
+            return Hist2D(h,**kwargs)
+        elif (isinstance(h,ROOT.TH1)):
+            return Hist1D(h,**kwargs)
+        elif (isinstance(h,ROOT.TDirectory)):
+              return Directory(h,**kwargs)
+        else:
+            raise ValueError("Object is not a supported type")
+
+    def getNames(self):
+        return [i.GetName() for i in self.TDirectory.GetListOfKeys()]
+
+    def plotPoints(self,name,rebin=1,scale=1,**kwargs):
+        h = self.get(name,rebin=rebin,scale=scale)
+        if (isinstance(h,Hist1D)):
+            return h.plotPoints(**kwargs)
+        else:
+            raise ValueError("This is not a 1D histogram and cannot be plotted with this method")
+        
+    def plotBand(self,name,rebin=1,scale=1,**kwargs):
+        h = self.get(name,rebin=rebin,scale=scale)
+        if (isinstance(h,Hist1D)):
+            return h.plotBand(**kwargs)
+        else:
+            raise ValueError("This is not a 1D histogram and cannot be plotted with this method")
+        
+    def plotBar(self,name,rebin=1,scale=1,**kwargs):
+        h = self.get(name,rebin=rebin,scale=scale)
+        if (isinstance(h,Hist1D)):
+            return h.plotBar(**kwargs)
+        else:
+            raise ValueError("This is not a 1D histogram and cannot be plotted with this method")
+        
+    def plotHeatmap(self,name,rebinx=1,rebiny=1,**kwargs):
+        h = self.get(name,rebinx=rebinx,rebiny=rebiny)
+        if (isinstance(h,Hist2D)):
+            return h.plotHeatmap(**kwargs)
+        else:
+            raise ValueError("This is not a 2D histogram and cannot be plotted with this method")
+ 
         
 class Hist1D:
     def __init__(self,hist,rebin=None,scale=1):
