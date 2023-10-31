@@ -2,6 +2,7 @@ import ROOT
 import numpy as np
 import matplotlib.pyplot as plt
 
+ROOT.gROOT.SetBatch(True)
 nObj = 0
 
 class File:
@@ -11,10 +12,13 @@ class File:
         else:
             self.TFile = ROOT.TFile(infile)
 
+    def setDirectory(self,dirName):
+        self.dir="." + dirName
+        
     def get(self,name,**kwargs):
-        if (not self.TFile.GetListOfKeys().Contains(name)):
+        if (not eval("self.TFile"+self.dir+".GetListOfKeys()").Contains(name)):
             raise ValueError("File does not contain specified object")
-        h = self.TFile.Get(name)
+        h = eval("self.TFile"+self.dir+".Get(name)")
         if (isinstance(h,ROOT.TH2)):
             return Hist2D(h,**kwargs)
         elif (isinstance(h,ROOT.TH1)):
@@ -23,7 +27,10 @@ class File:
               return Directory(h,**kwargs)
         else:
             raise ValueError("Object is not a supported type")
-
+        
+    def getNames(self):
+        return [i.GetName() for i in eval("self.TFile"+self.dir+".GetListOfKeys()")]
+    
     def getNames(self):
         return [i.GetName() for i in self.TFile.GetListOfKeys()]
 
@@ -149,6 +156,11 @@ class Hist1D:
         factor = np.sum(reference.y)/np.sum(self.y)
         self.scale(factor)
         return factor
+    
+    def norm(self,):
+        factor = 1/np.sum(self.y)
+        self.scale(factor)
+        return factor
         
     def plotPoints(self,xscale=1,**kwargs):
         return plt.errorbar(xscale*self.x,self.y,yerr=self.yerr,**kwargs)
@@ -160,8 +172,8 @@ class Hist1D:
                                 alpha=alpha)
         return line, band
 
-    def plotBar(self,shift=0,**kwargs):
-        bar = plt.bar(self.x+shift, self.y, **kwargs)
+    def plotBar(self,shift=0,wfactor=1,**kwargs):
+        bar = plt.bar(self.x+shift, self.y, width = self.xerr*2*wfactor, **kwargs)
         
         return bar
 
@@ -205,7 +217,7 @@ class Hist2D:
         self.z = np.array(z)
         self.zerr = np.array(zerr)
     
-    def plotHeatmap(self,kill_zeros=True,transpose=False,**kwargs):
+    def plotHeatmap(self,kill_zeros=True,transpose=False,xscale=1,yscale=1,**kwargs):
         xedge = self.xedge
         yedge = self.yedge
         z = self.z
@@ -215,10 +227,10 @@ class Hist2D:
             xedge, yedge = self.yedge, self.xedge
             z = np.transpose(self.z)
         
-        return plt.pcolormesh(xedge,yedge,z,**kwargs)
+        return plt.pcolormesh(xedge*xscale,yedge*yscale,z,**kwargs)
 
-    def projectionX(self,**kwargs):
-        return Hist1D(self.TH2.ProjectionX(),**kwargs)
+    def projectionX(self,firstbin=0,lastbin=-1,**kwargs):
+        return Hist1D(self.TH2.ProjectionX("_px",firstbin,lastbin),**kwargs)
 
-    def projectionY(self,**kwargs):
-        return Hist1D(self.TH2.ProjectionY(),**kwargs)
+    def projectionY(self,firstbin=0,lastbin=-1,**kwargs):
+        return Hist1D(self.TH2.ProjectionY("_py",firstbin,lastbin),**kwargs)
